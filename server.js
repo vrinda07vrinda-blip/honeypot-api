@@ -1,41 +1,32 @@
-import express from "express";
-import cors from "cors";
-
+const express = require("express");
 const app = express();
-app.use(cors());
+
 app.use(express.json());
 
-const API_KEY = "Bearer super_secret_honeypot_key_123";
-
+// Honeypot endpoint
 app.post("/api/honeypot", (req, res) => {
-  // Read API key from GUVI header
-  const apiKey = req.headers["x-api-key"];
+  const auth = req.headers.authorization;
 
-  if (!apiKey || apiKey !== API_KEY) {
+  if (auth !== "Bearer super_secret_honeypot_key_123") {
     return res.status(401).json({
-      status: "unauthorized",
-      message: "Invalid API key",
+      error: "Unauthorized"
     });
   }
 
-  // GUVI sends NO body → handle safely
-  const message = req.body?.message || "No message provided";
+  console.log("🚨 HONEYPOT TRIGGERED 🚨");
+  console.log("Message received:", req.body.message);
 
-  // Honeypot response (fake success)
-  return res.status(200).json({
-    status: "success",
-    honeypot: true,
-    received_message: message,
-    alert: "Suspicious activity logged",
+  res.status(200).json({
+    status: "scam_detected",
+    confidence: 0.95,
+    extracted: {
+      message: req.body.message
+    }
   });
 });
 
-// Health check (optional but good)
-app.get("/", (req, res) => {
-  res.send("Honeypot API is live");
-});
-
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+// IMPORTANT: bind to all interfaces
+const PORT = 8080;
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚨 Honeypot API running on port ${PORT}`);
 });
