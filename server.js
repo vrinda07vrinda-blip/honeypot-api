@@ -3,10 +3,22 @@ const app = express();
 
 app.use(express.json());
 
+// 🔥 ADD THIS ROOT ROUTE FOR UPTIMEROBOT:
+app.get("/", (req, res) => {
+  console.log("✅ Keep-alive ping from:", req.headers['user-agent']);
+  res.status(200).json({
+    status: "active",
+    service: "honeypot-api",
+    endpoint: "/api/honeypot",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Your existing honeypot endpoint
 app.post("/api/honeypot", (req, res) => {
   const apiKey = req.headers['x-api-key'];
   
-  // 1. Authentication
   if (apiKey !== "super_secret_honeypot_key_123") {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -14,7 +26,6 @@ app.post("/api/honeypot", (req, res) => {
   const scamData = req.body || {};
   const message = scamData.message || "No message provided";
   
-  // 2. Extract intelligence (simplified example)
   const extractedIntel = {
     original_message: message,
     timestamp: new Date().toISOString(),
@@ -25,11 +36,10 @@ app.post("/api/honeypot", (req, res) => {
     recommendation: "Block sender and report"
   };
   
-  // 3. ✅ CORRECT RESPONSE FORMAT WITH 'extracted' FIELD
   res.status(200).json({
-    status: "scam_detected",      // Required
-    confidence: 0.95,             // Required
-    extracted: extractedIntel     // ⚠️ REQUIRED - you were missing this!
+    status: "scam_detected",
+    confidence: 0.95,
+    extracted: extractedIntel
   });
 });
 
@@ -46,5 +56,5 @@ function findScamIndicators(text) {
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Fixed API running on port ${PORT}`);
+  console.log(`✅ Honeypot API with root route running on port ${PORT}`);
 });
