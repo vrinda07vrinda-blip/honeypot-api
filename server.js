@@ -5,28 +5,33 @@ app.use(express.json());
 
 // Honeypot endpoint
 app.post("/api/honeypot", (req, res) => {
-  const auth = req.headers.authorization;
-
-  if (auth !== "Bearer super_secret_honeypot_key_123") {
-    return res.status(401).json({
-      error: "Unauthorized"
-    });
+  console.log("🔍 Headers received:", req.headers);
+  
+  // The GUI tester sends 'x-api-key' in lowercase
+  const apiKey = req.headers['x-api-key'];
+  
+  if (!apiKey) {
+    console.log("❌ No x-api-key header found");
+    return res.status(401).json({ error: "Unauthorized" });
   }
-
-  console.log("🚨 HONEYPOT TRIGGERED 🚨");
-  console.log("Message received:", req.body.message);
-
+  
+  if (apiKey.trim() !== "super_secret_honeypot_key_123") {
+    console.log("❌ Invalid API key received:", apiKey);
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  
+  console.log("✅ API Key validated!");
+  
+  // Return success regardless of body
   res.status(200).json({
     status: "scam_detected",
     confidence: 0.95,
-    extracted: {
-      message: req.body.message
-    }
+    message: "Honeypot triggered successfully",
+    timestamp: new Date().toISOString()
   });
 });
 
-// IMPORTANT: bind to all interfaces
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚨 Honeypot API running on port ${PORT}`);
 });
