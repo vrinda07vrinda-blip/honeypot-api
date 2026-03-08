@@ -2,10 +2,12 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 8080;
 
-// Basic middleware
+console.log("🚀 Starting server...");
+
+// ACCEPT ANY CONTENT TYPE
 app.use(express.raw({ type: '*/*' }));
 
-// Simple root route
+// Root route
 app.get("/", (req, res) => {
   console.log("✅ Root route accessed");
   res.json({ status: "ok", service: "honeypot-api" });
@@ -30,7 +32,28 @@ app.post("/api/honeypot", (req, res) => {
   });
 });
 
-// Start server
-app.listen(port, "0.0.0.0", () => {
-  console.log(`✅ Server running on port ${port}`);
+// CRITICAL FIX: Proper server startup
+const server = app.listen(port, "0.0.0.0", () => {
+  console.log(`✅ Server successfully running on port ${port}`);
+  console.log(`🌍 Test: http://localhost:${port}/`);
 });
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, closing server...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, closing server...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+// Prevent process from exiting
+console.log("🔄 Server process active, waiting for connections...");
